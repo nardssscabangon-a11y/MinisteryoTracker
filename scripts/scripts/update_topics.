@@ -1,0 +1,82 @@
+
+import json
+import re
+from pathlib import Path
+from urllib.request import Request, urlopen
+from html.parser import HTMLParser
+
+SOURCE = "https://www.jw.org/tl/library/jw-workbook-para-sa-pulong/"
+
+class LinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+        self.current = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "a" and attrs.get("href"):
+            self.current = {
+                "url": attrs["href"],
+                "text": ""
+            }
+
+    def handle_data(self, data):
+        if self.current is not None:
+            self.current["text"] += data
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self.current is not None:
+            self.links.append(self.current)
+            self.current = None
+
+def fetch(url):
+    request = Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"}
+    )
+    with urlopen(request, timeout=30) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+html = fetch(SOURCE)
+parser = LinkParser()
+parser.feed(html)
+
+schedule_links = []
+for link in parser.links:
+    url = link["url"]
+    if "Iskedyul-ng-Pulong-Para-sa-Buhay-at-Ministeryo-Para-sa" in url:
+        if url.startswith("/"):
+            url = "https://www.jw.org" + url
+        if url.startswith("https://www.jw.org/"):
+            schedule_links.append({
+                "title": " ".join(link["text"].split()),
+                "url": url
+            })
+
+# Panatilihin ang mga link na nakuha mula sa opisyal na pahina.
+unique = {}
+for item in schedule_links:
+    unique[item["url"]] = item
+
+if not unique:
+    raise RuntimeError(
+        "Walang nakitang lingguhang iskedyul sa JW.org."
+    )
+
+output = {
+    "source": SOURCE,
+    "updated": __import__("datetime").datetime.now(
+        __import__("datetime").timezone.utc
+    ).isoformat(),
+    "schedules": list(unique.values())
+}
+
+Path("data").mkdir(exist_ok=True)
+Path("data/meeting_topics.json").write_text(
+    json.dumps(output, ensure_ascii=False, indent=2),
+    encoding="utf-8"
+)
+
+print("Nagawa ang data/meeting_topics.json")
+print("Mga iskedyul na nahanap:", len(unique))
