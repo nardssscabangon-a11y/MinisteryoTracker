@@ -201,5 +201,87 @@ async function readWorkbook(){
 function importDetectedParts(){const chosen=[...document.querySelectorAll('.workPart:checked')].map(x=>window.detectedWorkbookParts[+x.dataset.i]);const date=$('workDate').value,name=$('workName').value.trim();if(!date){alert('Piliin ang petsa ng pulong.');return}if(!chosen.length){alert('Pumili ng kahit isang bahagi.');return}let added=0;for(const c of chosen){const part=c.num+'. '+c.title+(c.duration?' ('+c.duration+' min.)':'');state.assignments.push({id:Date.now()+Math.random(),date,part,name:name||'',note:''});if(name&&!state.members.some(n=>n.toLowerCase()===name.toLowerCase()))state.members.push(name);added++}persist();$('monthPick').value=ym(date);$('rankMonth').value=ym(date);render();$('workbookStatus').textContent=`Naidagdag ang ${added} bahagi. I-edit ang mga pangalan sa Mga Assignment at tingnan ang mga paksa at pangalan bago mag-print.`;alert('Naidagdag ang '+added+' bahagi. Pumunta sa Mga Assignment para magtalaga ng tamang pangalan.');}
 render();
 </script>
+ 
+<script>
+(function () {
+  const saveKey = "MinisteryoTracker_AutoSave_v1";
+  let saveTimer;
+
+  function getFields() {
+    return Array.from(
+      document.querySelectorAll("input, select, textarea")
+    );
+  }
+
+  function saveData() {
+    const data = getFields().map((field, index) => ({
+      key: field.id || field.name || "field_" + index,
+      type: field.type || field.tagName,
+      value: field.type === "checkbox" || field.type === "radio"
+        ? field.checked
+        : field.value
+    }));
+
+    try {
+      localStorage.setItem(saveKey, JSON.stringify(data));
+      showStatus("Na-save na");
+    } catch (error) {
+      showStatus("Hindi na-save");
+    }
+  }
+
+  function showStatus(message) {
+    let status = document.getElementById("autosave-status");
+
+    if (!status) {
+      status = document.createElement("div");
+      status.id = "autosave-status";
+      status.style.cssText =
+        "position:fixed;bottom:10px;right:10px;z-index:99999;" +
+        "background:#e8f5e9;color:#1b5e20;padding:8px 12px;" +
+        "border-radius:8px;font:14px Arial,sans-serif;";
+      document.body.appendChild(status);
+    }
+
+    status.textContent = message;
+  }
+
+  function restoreData() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(saveKey) || "[]");
+      const fields = getFields();
+
+      saved.forEach((item, index) => {
+        const field = fields[index];
+        if (!field) return;
+
+        if (field.type === "checkbox" || field.type === "radio") {
+          field.checked = Boolean(item.value);
+        } else {
+          field.value = item.value;
+        }
+      });
+    } catch (error) {
+      console.log("Hindi maibalik ang na-save na data.");
+    }
+  }
+
+  document.addEventListener("input", function () {
+    showStatus("Sine-save...");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveData, 500);
+  });
+
+  document.addEventListener("change", function () {
+    showStatus("Sine-save...");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveData, 500);
+  });
+
+  restoreData();
+  showStatus("Auto-Save handa");
+})();
+</script>
+
 </body>
 </html>
