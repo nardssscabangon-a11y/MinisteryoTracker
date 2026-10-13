@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="tl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ministeryo Tracker</title>
+<style>
+:root{--green:#216846;--pale:#e7f2eb;--ink:#202722;--muted:#68736c;--line:#d9e1dc;--bg:#f4f7f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+header{background:var(--green);color:white;padding:22px max(18px,calc((100% - 1080px)/2))}
+header h1{margin:0;font-size:24px}header p{margin:5px 0 0;color:#e5f1e9}
+main{max-width:1080px;margin:20px auto;padding:0 16px 36px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+button,.button{border:0;border-radius:10px;padding:10px 14px;background:var(--green);color:white;font-weight:650;cursor:pointer}
+button.secondary{background:#e7ece8;color:var(--ink)}button.danger{background:#f7e7e5;color:#92372e}
+.tab.active{background:var(--green);color:white}.tab{background:#e7ece8;color:var(--ink)}
+.panel{display:none}.panel.active{display:block}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:180px}
+h2{font-size:19px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}label{display:block;font-size:13px;font-weight:650;color:#49544d;margin:8px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid #cbd6ce;border-radius:9px;font:inherit;background:white;color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:var(--pale);border-radius:12px;padding:14px}.stat strong{display:block;font-size:25px;color:var(--green)}.stat span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{background:#edf4ef;color:#244c36;font-size:12px}td:last-child,th:last-child{text-align:right}.muted{color:var(--muted);font-size:13px}.bar{height:7px;background:#e7ece8;border-radius:99px;overflow:hidden;margin-top:6px}.bar span{display:block;height:100%;background:#39845c}.empty{padding:18px;text-align:center;color:var(--muted)}
+.print-only{display:none}
+
+/* Weekly meeting schedule template modeled on the supplied sample */
+.schedule-sheet{display:none}
+@media print{
+ .schedule-sheet{display:block!important;width:100%;font-family:Arial,Helvetica,sans-serif;color:#172126}
+ .schedule-sheet .topline{display:flex;justify-content:space-between;align-items:center;border-bottom:3px double #222;padding-bottom:5mm;margin-bottom:6mm;font-weight:bold}
+ .schedule-sheet .topline .cong{font-size:12pt}.schedule-sheet .topline .doc-title{font-family:Georgia,serif;font-size:17pt;text-align:right}
+ .schedule-sheet .weekline{display:flex;justify-content:space-around;font-weight:bold;font-size:11pt;margin:4mm 0 7mm}
+ .schedule-sheet .meeting-row{display:grid;grid-template-columns:17mm 1fr 67mm;gap:3mm;align-items:start;margin:0 0 3.2mm;min-height:7mm;font-size:10pt;break-inside:avoid}
+ .schedule-sheet .time{color:#4e5659;font-size:9pt;padding-top:1mm}
+ .schedule-sheet .part{font-weight:500}.schedule-sheet .part strong{margin-right:2mm}
+ .schedule-sheet .assignment{font-size:9.5pt;padding-left:2mm}
+ .schedule-sheet .role{font-size:8pt;color:#4b5559}.schedule-sheet .section{font-weight:bold;color:white;padding:1.2mm 3mm;margin:5mm 0 2.5mm;width:54%;text-align:center;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .schedule-sheet .green{background:#46565a}.schedule-sheet .gold{background:#c38a00}.schedule-sheet .red{background:#94002e}
+ .schedule-sheet .blank{display:inline-block;min-width:38mm;border-bottom:.5pt solid #777;height:4mm}
+ .schedule-sheet .footer{position:fixed;bottom:0;left:0;font-size:8pt;color:#647076}
+ #program .card>h2,#programRows,#program table,#program .print-title,#program .print-meta,#program .stats{display:none!important}
+}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.card{padding:14px}table{font-size:12px}th,td{padding:7px 4px}}
+@media print{
+ @page{margin:6mm}
+ html,body{width:auto!important;min-width:0!important;margin:0!important;padding:0!important;background:white;font-size:8pt;color:#111;overflow:visible!important}header,.tabs,.no-print,.screen-only{display:none!important}
+ main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}.panel{display:none!important}#program.panel.active{display:block!important}
+ .card{border:0;padding:0;margin:0 0 5mm;border-radius:0}.print-only{display:block}
+ h2{font-size:13pt;margin-bottom:3mm}.print-title{text-align:center;margin-bottom:4mm}.print-title h1{font-size:16pt;margin:0}.print-title p{margin:1mm 0;font-size:9pt}
+ table{width:100%!important;max-width:100%!important;table-layout:fixed;font-size:7.5pt;overflow-wrap:anywhere;word-break:normal}th,td{padding:1.5mm 1.2mm;border:0.4pt solid #aeb8b1;overflow-wrap:anywhere;word-break:normal}tr.section-row td{background:#e7f2eb!important;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}th{background:#e7f2eb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .print-meta{display:flex;justify-content:space-between;gap:4mm;flex-wrap:wrap;margin:2mm 0;font-size:7.5pt}.print-note{font-size:7pt;margin-top:3mm}
+}
+</style>
+</head>
+<body>
+<header><h1>Ministeryo Tracker</h1><p>Buwanang programa, assignment, ranking, at printable sa iba’t ibang bond paper</p></header>
+<main>
+<div class="tabs no-print">
+<button class="tab active" data-tab="program">Programa at Print</button>
+<button class="tab" data-tab="assignments">Mga Assignment</button>
+<button class="tab" data-tab="ranking">Buwanang Ranking</button>
+<button class="tab" data-tab="settings">Mga Kapatid / Data</button>
+</div>
+
+<section id="program" class="panel active">
+<div class="card no-print">
+<h2>📥 Mag-upload ng opisyal na workbook</h2>
+<p class="muted">Piliin ang workbook mula sa JW.org. Pinakamadaling basahin ang RTF o TXT para sa bawat linggo; maaari ring subukan ang PDF. Ipapakita muna ang mga bahaging nakita para ma-review mo bago idagdag.</p>
+<div class="row"><input id="workbookFile" type="file" accept=".rtf,.txt,.html,.htm,.pdf" style="max-width:100%"><button onclick="readWorkbook()">Basahin ang workbook</button><a href="https://www.jw.org/tl/library/jw-workbook-para-sa-pulong/" target="_blank" rel="noopener" class="button" style="text-decoration:none">Buksan ang JW.org</a></div>
+<div id="workbookStatus" class="muted" style="margin-top:8px"></div><div id="workbookPreview"></div>
+</div>
+<div class="card">
+<div class="print-title"><h1>ISKEDYUL NG PULONG SA GITNANG SANLINGGO</h1><p id="congregationPrint">JAEN CONGREGATION</p></div>
+<div class="row between no-print">
+<div class="grow"><label for="monthPick">Buwan ng programa</label><input type="month" id="monthPick"></div>
+<div class="row" style="align-self:end"><button onclick="window.print()">I-print ang programa</button><button class="secondary" onclick="exportCSV()">I-export ang CSV</button></div>
+</div>
+<div class="print-meta"><span>Linggo: <b id="printWeek">Pumili ng petsa</b></span><span>Chairman: <b id="chairmanPrint">________________</b></span></div><div class="row no-print"><div class="grow"><label>Kongregasyon</label><input id="congregation" value="JAEN CONGREGATION" oninput="$('congregationPrint').textContent=this.value;$('sheetCong').textContent=this.value"></div><div class="grow"><label>Chairman</label><input id="chairman" placeholder="Pangalan ng chairman" oninput="$('chairmanPrint').textContent=this.value||'________________'"></div></div><div class="print-meta"><span>Buwan/Taon: <b id="printMonth"></b></span><span>Panalangin: <b id="prayerPrint">________________</b></span></div>
+<div class="stats screen-only">
+<div class="stat"><strong id="statParts">0</strong><span>Mga naitalang assignment</span></div>
+<div class="stat"><strong id="statPeople">0</strong><span>Kapatid sa talaan</span></div>
+<div class="stat"><strong id="statKinds">0</strong><span>Uri ng bahagi</span></div>
+</div>
+<div class="schedule-sheet" id="scheduleSheet">
+<div class="topline"><span class="cong" id="sheetCong">JAEN CONGREGATION</span><span class="doc-title">Iskedyul ng Pulong sa Gitnang Sanlinggo</span></div>
+<div class="weekline"><span id="sheetWeek">Petsa / linggo: __________________</span><span>Chairman: <span class="blank"></span></span></div>
+<div class="meeting-row"><div class="time">6:00</div><div class="part">● Awit Blg. <span class="blank"></span></div><div class="assignment"><span class="role">Panalangin:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:05</div><div class="part">● Pambungad na Komento (1 min.)</div><div class="assignment"></div></div>
+<div class="section green">KAYAMANAN MULA SA SALITA NG DIYOS</div>
+<div class="meeting-row"><div class="time">6:06</div><div class="part"><strong>1</strong> <span class="blank" style="min-width:68mm"></span> (10 min.)</div><div class="assignment"><span class="role">Tagapahayag:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:16</div><div class="part"><strong>2</strong> Espirituwal na Hiyas (10 min.)</div><div class="assignment"><span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:26</div><div class="part"><strong>3</strong> Pagbabasa ng Bibliya (4 min.)</div><div class="assignment"><span class="role">Estudyante:</span> <span class="blank"></span></div></div>
+<div class="section gold">MAGING MAHUSAY SA MINISTERYO</div>
+<div class="meeting-row"><div class="time">6:30</div><div class="part"><strong>4</strong> Pagpapasimula ng Pakikipag-usap (3 min.)</div><div class="assignment"><span class="role">Estudyante:</span> <span class="blank"></span><br><span class="role">Assistant:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:34</div><div class="part"><strong>5</strong> Pagpapasimula ng Pakikipag-usap (2 min.)</div><div class="assignment"><span class="role">Estudyante:</span> <span class="blank"></span><br><span class="role">Assistant:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:37</div><div class="part"><strong>6</strong> Pagpapasimula ng Pakikipag-usap (2 min.)</div><div class="assignment"><span class="role">Estudyante:</span> <span class="blank"></span><br><span class="role">Assistant:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">6:40</div><div class="part"><strong>7</strong> Pahayag (4 min.)</div><div class="assignment"><span class="role">Estudyante:</span> <span class="blank"></span></div></div>
+<div class="section red">PAMUMUHAY BILANG KRISTIYANO</div>
+<div class="meeting-row"><div class="time">6:45</div><div class="part">● Awit Blg. <span class="blank"></span></div><div class="assignment"></div></div>
+<div class="meeting-row"><div class="time">6:50</div><div class="part"><strong>8</strong> <span class="blank" style="min-width:68mm"></span><br>(15 min.) Pagtalakay</div><div class="assignment"><span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">7:05</div><div class="part"><strong>9</strong> Pag-aaral ng Kongregasyon sa Bibliya (30 min.)</div><div class="assignment"><span class="role">Konduktor:</span> <span class="blank"></span><br><span class="role">Tagabasa:</span> <span class="blank"></span></div></div>
+<div class="meeting-row"><div class="time">7:35</div><div class="part">● Pangwakas na Komento (3 min.)</div><div class="assignment"></div></div>
+<div class="meeting-row"><div class="time">7:38</div><div class="part">● Awit Blg. <span class="blank"></span></div><div class="assignment"><span class="role">Panalangin:</span> <span class="blank"></span></div></div>
+<div class="footer">S-140-TG</div>
+</div>
+<h2>Mga Bahagi at Nakaatas</h2>
+<table><thead><tr><th>Petsa</th><th>Bahagi / Paksa</th><th>Pangalan ng Kapatid</th><th>Oras / Tala</th></tr></thead><tbody id="programRows"></tbody></table>
+<p class="print-note">I-edit ang pangalan ng kongregasyon at mga assignment sa app bago mag-print.</p>
+</div>
+</section>
+
+<section id="assignments" class="panel">
+<div class="card">
+<h2>Magdagdag ng assignment</h2>
+<div class="grid">
+<div><label>Petsa</label><input type="date" id="aDate"></div>
+<div><label>Bahagi / Paksa</label><input id="aPart" placeholder="Hal. Pag-uusap, Pahayag"></div>
+<div><label>Pangalan ng kapatid</label><input id="aName" list="memberOptions" placeholder="Piliin o ilagay ang pangalan"><datalist id="memberOptions"></datalist></div>
+<div><label>Oras / Tala (opsyonal)</label><input id="aNote" placeholder="Hal. 3 minuto"></div><div><label>Uri / papel (opsyonal)</label><select id="aRole"><option value="">Karaniwang bahagi</option><option>Estudyante</option><option>Assistant</option><option>Tagapangulo</option><option>Pananalangin</option><option>Tagabasa</option><option>Kond uktor</option></select></div>
+</div>
+<div class="row" style="margin-top:12px"><button onclick="addAssignment()">I-save ang assignment</button><button class="secondary" onclick="document.getElementById('importFile').click()">Mag-import ng CSV</button><input id="importFile" type="file" accept=".csv,text/csv" hidden onchange="importCSV(event)"></div>
+<p class="muted">CSV columns: date,part,name,note. Maaari mong i-export ang datos, i-edit, at i-import muli.</p>
+</div>
+<div class="card"><div class="row between"><h2>Mga naitalang assignment</h2><div class="row"><button onclick="printAssignmentsProgram()">I-print ang programa at mga assignment</button><button class="secondary" onclick="clearMonth()">Burahin ang napiling buwan</button></div></div>
+<table><thead><tr><th>Petsa</th><th>Bahagi</th><th>Kapatid</th><th>Tala</th><th></th></tr></thead><tbody id="assignmentRows"></tbody></table>
+</div>
+</section>
+
+<section id="ranking" class="panel">
+<div class="card">
+<div class="row between"><h2>Buwanang ranking</h2><div style="min-width:180px"><label>Buwan</label><input type="month" id="rankMonth"></div></div>
+<p class="muted">Awtomatikong binibilang mula sa mga assignment na naitala para sa buwang pinili.</p>
+<div id="rankingRows"></div>
+</div>
+</section>
+
+<section id="settings" class="panel">
+<div class="card">
+<h2>Talaan ng mga kapatid</h2>
+<div class="row"><div class="grow"><label>Bagong pangalan</label><input id="newMember" placeholder="Pangalan ng kapatid"></div><button style="align-self:end" onclick="addMember()">Idagdag</button></div>
+<table><thead><tr><th>Pangalan</th><th>Bahagi sa napiling buwan</th><th></th></tr></thead><tbody id="memberRows"></tbody></table>
+</div>
+<div class="card">
+<h2>Backup at paglipat ng datos</h2><p class="muted">Naka-save ang prototype sa browser na ito. Mag-export ng CSV bilang backup kung lilipat ng device.</p>
+<div class="row"><button onclick="exportCSV()">I-download ang backup CSV</button><button class="secondary" onclick="document.getElementById('importFile').click()">I-import ang CSV</button></div>
+</div>
+<div class="card">
+<h2>Tungkol sa automatic update</h2>
+<p class="muted">Ang prototype na ito ay kusang nag-a-update ng ranking kapag nagdagdag o nag-edit ka ng assignment, at nagbabago ang buwan sa pagpili. Hindi pa ito kusang kumukuha ng opisyal na programa mula sa jw.org; para roon, kailangan ng suportadong data source o ligtas na integration at regular na pag-verify.</p>
+</div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=new Date(); const ym=d=>d.slice(0,7);
+$('monthPick').value=ym(today.toISOString().slice(0,10)); $('rankMonth').value=$('monthPick').value; $('aDate').value=today.toISOString().slice(0,10);
+let state={members:[],assignments:[],workbookText:'', congregation:'JAEN CONGREGATION'};
+try{const saved=localStorage.getItem('ministeryoTrackerData');if(saved)state=JSON.parse(saved)}catch(e){}
+function persist(){localStorage.setItem('ministeryoTrackerData',JSON.stringify(state));render()}
+function currentMonth(){return $('monthPick').value||ym(today.toISOString().slice(0,10))}
+function currentRankMonth(){return $('rankMonth').value||currentMonth()}
+function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function printAssignmentsProgram(){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.querySelector('[data-tab="program"]').classList.add('active');$('program').classList.add('active');render();setTimeout(()=>window.print(),150)}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');render()}));
+$('monthPick').addEventListener('change',()=>{$('rankMonth').value=currentMonth();render()});$('rankMonth').addEventListener('change',render);
+function addAssignment(){const date=$('aDate').value,part=$('aPart').value.trim(),name=$('aName').value.trim(),note=[$('aRole')?.value,$('aNote').value.trim()].filter(Boolean).join(' — ');if(!date||!part||!name){alert('Ilagay ang petsa, bahagi, at pangalan.');return}if(!state.members.some(x=>x.toLowerCase()===name.toLowerCase()))state.members.push(name);state.assignments.push({id:Date.now()+Math.random(),date,part,name:state.members.find(x=>x.toLowerCase()===name.toLowerCase()),note});$('aPart').value='';$('aName').value='';$('aNote').value='';if($('aRole'))$('aRole').value='';$('monthPick').value=ym(date);$('rankMonth').value=ym(date);persist()}
+function addMember(){const n=$('newMember').value.trim();if(!n)return;if(!state.members.some(x=>x.toLowerCase()===n.toLowerCase()))state.members.push(n);$('newMember').value='';persist()}
+function removeAssignment(id){state.assignments=state.assignments.filter(a=>String(a.id)!==String(id));persist()}
+function removeMember(name){if(state.assignments.some(a=>a.name===name)){if(!confirm('May assignment ang kapatid na ito. Alisin pa rin sa talaan?'))return}state.members=state.members.filter(n=>n!==name);persist()}
+function clearMonth(){const m=currentMonth();if(confirm('Burahin lahat ng assignment sa '+m+'?')){state.assignments=state.assignments.filter(a=>ym(a.date)!==m);persist()}}
+function render(){const m=currentMonth(),rm=currentRankMonth(),monthly=state.assignments.filter(a=>ym(a.date)===m).sort((a,b)=>a.date.localeCompare(b.date));$('printMonth').textContent=m;$('congregationPrint').textContent=$('congregation')?.value||'JAEN CONGREGATION';$('chairmanPrint').textContent=$('chairman')?.value||'________________';$('printWeek').textContent=monthly.length?new Date(monthly[0].date+'T12:00:00').toLocaleDateString('tl-PH',{month:'long',day:'numeric'})+' – '+new Date(monthly[monthly.length-1].date+'T12:00:00').toLocaleDateString('tl-PH',{month:'long',day:'numeric',year:'numeric'}):'Pumili ng petsa';$('statParts').textContent=monthly.length;$('statPeople').textContent=new Set(monthly.map(a=>a.name)).size;$('statKinds').textContent=new Set(monthly.map(a=>a.part)).size;
+$('programRows').innerHTML=monthly.map(a=>`<tr><td>${safe(a.date)}</td><td>${safe(a.part)}</td><td>${safe(a.name)}</td><td>${safe(a.note)}</td></tr>`).join('')||`<tr class="section-row"><td colspan="4"><b>KAYAMANAN MULA SA SALITA NG DIYOS</b></td></tr><tr><td>__________</td><td>Mga Tampok na Bahagi</td><td>________________________</td><td>________</td></tr><tr><td>__________</td><td>Espirituwal na Hiyas</td><td>________________________</td><td>________</td></tr><tr><td>__________</td><td>Pagbabasa ng Bibliya</td><td>________________________</td><td>________</td></tr><tr class="section-row"><td colspan="4"><b>MAGING MAHUSAY SA MINISTERYO</b></td></tr><tr><td>__________</td><td>Unang Pag-uusap</td><td>Estudyante: ______________<br>Assistant: _______________</td><td>_____ min.</td></tr><tr><td>__________</td><td>Pagdalaw-Muli</td><td>Estudyante: ______________<br>Assistant: _______________</td><td>_____ min.</td></tr><tr><td>__________</td><td>Pahayag / Pag-aaral</td><td>Estudyante: ______________<br>Assistant: _______________</td><td>_____ min.</td></tr><tr class="section-row"><td colspan="4"><b>PAMUMUHAY BILANG KRISTIYANO</b></td></tr><tr><td>__________</td><td>Bahagi sa Pulong</td><td>________________________</td><td>________</td></tr><tr><td>__________</td><td>Pag-aaral ng Kongregasyon</td><td>Kond uktor: ______________<br>Tagabasa: ________________</td><td>________</td></tr>`;
+$('assignmentRows').innerHTML=monthly.map(a=>`<tr><td>${safe(a.date)}</td><td>${safe(a.part)}</td><td>${safe(a.name)}</td><td>${safe(a.note)}</td><td><button class="danger" onclick="removeAssignment('${a.id}')">Tanggalin</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Wala pang assignment.</td></tr>';
+$('memberOptions').innerHTML=state.members.map(n=>`<option value="${safe(n)}"></option>`).join('');
+const counts=state.members.map(name=>({name,count:state.assignments.filter(a=>ym(a.date)===rm&&a.name===name).length}));state.assignments.filter(a=>ym(a.date)===rm&&!state.members.includes(a.name)).forEach(a=>counts.push({name:a.name,count:state.assignments.filter(x=>ym(x.date)===rm&&x.name===a.name).length}));counts.sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));const max=Math.max(1,...counts.map(x=>x.count));
+$('rankingRows').innerHTML=counts.map((x,i)=>`<div style="margin:14px 0"><div class="row between"><span><b>${i+1}. ${safe(x.name)}</b></span><span>${x.count} bahagi</span></div><div class="bar"><span style="width:${x.count/max*100}%"></span></div></div>`).join('')||'<div class="empty">Magdagdag muna ng mga kapatid o assignment.</div>';
+$('memberRows').innerHTML=state.members.map(n=>`<tr><td>${safe(n)}</td><td>${state.assignments.filter(a=>ym(a.date)===m&&a.name===n).length}</td><td><button class="danger" onclick="removeMember('${safe(n).replace(/'/g,"\\'")}')">Alisin</button></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Wala pang pangalan. Idagdag ang mga kapatid sa itaas.</td></tr>';
+}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function exportCSV(){const rows=[['date','part','name','note'],...state.assignments.map(a=>[a.date,a.part,a.name,a.note])];const csv=rows.map(r=>r.map(csvCell).join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ministeryo-tracker.csv';a.click();URL.revokeObjectURL(url)}
+function importCSV(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{const lines=String(reader.result).replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);const parse=line=>{let out=[],cur='',quoted=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(c==='"')quoted=!quoted;else if(c===','&&!quoted){out.push(cur);cur=''}else cur+=c}out.push(cur);return out};let count=0;lines.slice(1).forEach(line=>{const [date,part,name,note='']=parse(line);if(date&&part&&name){state.assignments.push({id:Date.now()+Math.random(),date,part,name,note});if(!state.members.some(n=>n.toLowerCase()===name.toLowerCase()))state.members.push(name);count++}});persist();alert(count+' assignment ang na-import.');event.target.value=''};reader.readAsText(file)}
+async function readWorkbook(){
+ const file=$('workbookFile').files[0]; if(!file){alert('Pumili muna ng workbook file.');return}
+ $('workbookStatus').textContent='Binabasa ang file…';$('workbookPreview').innerHTML='';let text='';
+ try{
+  if(file.name.toLowerCase().endsWith('.pdf')){
+   if(!window.pdfjsLib){await new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';sc.onload=resolve;sc.onerror=reject;document.head.appendChild(sc)})}
+   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const c=await page.getTextContent();text+=c.items.map(x=>x.str).join(' ')+'\n'}
+  }else{text=await file.text();if(file.name.toLowerCase().endsWith('.rtf'))text=text.replace(/\\par[d]?/g,'\n').replace(/\\'[0-9a-f]{2}/gi,' ').replace(/\\[a-z]+-?\d* ?/gi,' ').replace(/[{}]/g,' ');if(/\.html?$/i.test(file.name))text=text.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ');}
+  text=text.replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim();state.workbookText=text;
+  const lines=text.split(/\n|(?<=\.)\s+(?=\d+\s)/).map(x=>x.trim()).filter(Boolean);
+  const candidates=[];const re=/(?:^|\s)(\d{1,2})\s+(.{4,180}?)(?:\s*\((\d{1,2})\s*(?:min\.?|minuto[s]?)\))?(?=\s+\d{1,2}\s+|$)/i;
+  for(const line of lines){let m;const r=/(?:^|\s)(\d{1,2})\s+([^\n]{4,140}?)(?:\s*\((\d{1,2})\s*(?:min\.?|minuto[s]?)\))?(?=\s{2,}|$)/gi;while((m=r.exec(line))!==null){let title=m[2].replace(/\s+/g,' ').trim();if(title.length>3&&!/^(?:202\d|\d{1,2}:\d{2})$/.test(title))candidates.push({num:m[1],title,duration:m[3]||''})}}
+  const uniq=[];const seen=new Set();for(const c of candidates){const k=c.num+'|'+c.title;if(!seen.has(k)){seen.add(k);uniq.push(c)}}
+  const weekMatch=text.match(/(?:Oktubre|Nobyembre|Disyembre|Enero|Pebrero|Marso|Abril|Mayo|Hunyo|Hulyo|Agosto|Setyembre|October|November|December|January|February|March|April|May|June|July|August|September)\s+\d{1,2}\s*(?:[-–]\s*(?:\w+\s+)?\d{1,2})?/i);
+  $('workbookStatus').textContent=`Nabasa ang “${file.name}”. ${uniq.length} posibleng may-numero na bahagi ang nakita. Pakisuri dahil maaaring mag-iba ang ayos ng teksto depende sa format ng workbook.`;
+  if(!uniq.length){$('workbookPreview').innerHTML='<p class="muted">Walang awtomatikong nakilalang numbered parts. Subukan ang lingguhang RTF/TXT download sa JW.org, o ilagay nang mano-mano ang mga bahagi sa Mga Assignment.</p>';return}
+  $('workbookPreview').innerHTML='<p><b>Mga bahaging nakita — piliin ang mga idaragdag:</b></p>'+uniq.slice(0,40).map((c,i)=>`<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" class="workPart" data-i="${i}" checked style="width:auto;margin-top:4px"><span>${c.num}. ${safe(c.title)} ${c.duration?'('+c.duration+' min.)':''}</span></label>`).join('')+'<div class="grid"><div><label>Petsa ng pulong para sa mga bahaging ito</label><input type="date" id="workDate" value="'+$('aDate').value+'"></div><div><label>Default na pangalan (maaaring i-edit pagkatapos)</label><input id="workName" placeholder="Iwanang blanko kung wala pa"></div></div><button style="margin-top:10px" onclick="importDetectedParts()">Idagdag ang napiling bahagi</button>';
+  window.detectedWorkbookParts=uniq;
+ }catch(e){$('workbookStatus').textContent='Hindi mabasa ang file. Para sa PDF, kailangan ng internet para ma-load ang PDF reader. Subukan ang RTF o TXT file mula sa JW.org.'}
+}
+function importDetectedParts(){const chosen=[...document.querySelectorAll('.workPart:checked')].map(x=>window.detectedWorkbookParts[+x.dataset.i]);const date=$('workDate').value,name=$('workName').value.trim();if(!date){alert('Piliin ang petsa ng pulong.');return}if(!chosen.length){alert('Pumili ng kahit isang bahagi.');return}let added=0;for(const c of chosen){const part=c.num+'. '+c.title+(c.duration?' ('+c.duration+' min.)':'');state.assignments.push({id:Date.now()+Math.random(),date,part,name:name||'',note:''});if(name&&!state.members.some(n=>n.toLowerCase()===name.toLowerCase()))state.members.push(name);added++}persist();$('monthPick').value=ym(date);$('rankMonth').value=ym(date);render();$('workbookStatus').textContent=`Naidagdag ang ${added} bahagi. I-edit ang mga pangalan sa Mga Assignment at tingnan ang mga paksa at pangalan bago mag-print.`;alert('Naidagdag ang '+added+' bahagi. Pumunta sa Mga Assignment para magtalaga ng tamang pangalan.');}
+render();
+</script>
+</body>
+</html>
