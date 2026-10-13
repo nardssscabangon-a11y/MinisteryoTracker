@@ -12,12 +12,23 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show update notice
+      - name: Run JW.org schedule fetcher
+        run: python scripts/update_topics.py
+
+      - name: Save updated schedule data
         run: |
-          echo "Handa na ang workflow para sa pag-update ng mga paksa."
-          echo "Kailangan pang ikonekta ang opisyal na iskedyul ng JW.org."
-          
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/meeting_topics.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update meeting schedule data"
+            git push
+          else
+            echo "Walang bagong pagbabago."
+          fi
+
